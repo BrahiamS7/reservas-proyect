@@ -1,0 +1,170 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [btree_gist]
+}
+
+enum EstadoReserva {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
+}
+
+enum EstadoPago {
+  PENDIENTE
+  PAGADO
+}
+
+model Tenant {
+  id                  String   @id @default(uuid())
+  nombre              String
+  duracionSlotMinutos Int      @default(60) @map("duracion_slot_minutos")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  usuariosAdmin     UsuarioAdmin[]
+  clientes          Cliente[]
+  tiposCancha       TipoCancha[]
+  canchas           Cancha[]
+  productos         Producto[]
+  reservas          Reserva[]
+  horariosOperacion HorarioOperacion[]
+
+  @@map("tenants")
+}
+
+model HorarioOperacion {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  diaSemana  Int      @map("dia_semana")
+  horaInicio DateTime @map("hora_inicio") @db.Time
+  horaFin    DateTime @map("hora_fin") @db.Time
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("horarios_operacion")
+}
+
+model UsuarioAdmin {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  nombre       String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  rol          String   @default("admin")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("usuarios_admin")
+}
+
+model Cliente {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  nombre    String
+  telefono  String
+  email     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant              Tenant               @relation(fields: [tenantId], references: [id])
+  codigosVerificacion CodigoVerificacion[]
+  reservas            Reserva[]
+
+  @@unique([tenantId, telefono])
+  @@map("clientes")
+}
+
+model CodigoVerificacion {
+  id        String   @id @default(uuid())
+  clienteId String   @map("cliente_id")
+  codigo    String
+  expiraEn  DateTime @map("expira_en")
+  usado     Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+
+  @@index([codigo, expiraEn])
+  @@map("codigos_verificacion")
+}
+
+model TipoCancha {
+  id       String  @id @default(uuid())
+  tenantId String  @map("tenant_id")
+  nombre   String
+  precio   Decimal @db.Decimal(10, 2)
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id])
+  canchas Cancha[]
+
+  @@unique([tenantId, nombre])
+  @@map("tipos_cancha")
+}
+
+model Cancha {
+  id           String  @id @default(uuid())
+  tenantId     String  @map("tenant_id")
+  tipoCanchaId String  @map("tipo_cancha_id")
+  nombre       String
+  activa       Boolean @default(true)
+  imagenUrl    String? @map("imagen_url")
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id])
+  tipoCancha TipoCancha @relation(fields: [tipoCanchaId], references: [id])
+  reservas   Reserva[]
+
+  @@map("canchas")
+}
+
+model Producto {
+  id         String  @id @default(uuid())
+  tenantId   String  @map("tenant_id")
+  nombre     String
+  precio     Decimal @db.Decimal(10, 2)
+  stock      Int     @default(0)
+  disponible Boolean @default(true)
+  imagenUrl  String? @map("imagen_url")
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id])
+  reservaBebidas ReservaBebida[]
+
+  @@map("productos")
+}
+
+model Reserva {
+  id          String        @id @default(uuid())
+  tenantId    String        @map("tenant_id")
+  canchaId    String        @map("cancha_id")
+  clienteId   String        @map("cliente_id")
+  inicio      DateTime      @db.Timestamptz
+  fin         DateTime      @db.Timestamptz
+  estado      EstadoReserva @default(PENDIENTE)
+  estadoPago  EstadoPago    @default(PENDIENTE) @map("estado_pago")
+  precioTotal Decimal       @map("precio_total") @db.Decimal(10, 2)
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id])
+  cancha         Cancha          @relation(fields: [canchaId], references: [id])
+  cliente        Cliente         @relation(fields: [clienteId], references: [id])
+  reservaBebidas ReservaBebida[]
+
+  @@map("reservas")
+}
+
+model ReservaBebida {
+  id             String  @id @default(uuid())
+  reservaId      String  @map("reserva_id")
+  productoId     String  @map("producto_id")
+  cantidad       Int
+  precioUnitario Decimal @map("precio_unitario") @db.Decimal(10, 2)
+
+  reserva  Reserva  @relation(fields: [reservaId], references: [id])
+  producto Producto @relation(fields: [productoId], references: [id])
+
+  @@map("reserva_bebidas")
+}
