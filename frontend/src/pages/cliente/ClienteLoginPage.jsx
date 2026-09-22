@@ -72,9 +72,6 @@ export default function ClienteLoginPage() {
             <button type="submit" disabled={cargando}>
               {cargando ? 'Enviando...' : 'Enviar código'}
             </button>
-            <Link to="/admin/login" className="link-secundario">
-              ¿Sos administrador? Ingresá acá
-            </Link>
           </form>
         )}
 

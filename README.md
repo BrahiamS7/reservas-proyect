@@ -47,19 +47,33 @@ Para evitar condiciones de carrera, la exclusividad de horarios por cancha **no 
 
 ## Autenticación
 
-- **Admin:** email + password (JWT de 8h). Sin auto-registro: los admins se crean por seed o manualmente.
-- **Cliente:** login por OTP enviado a WhatsApp (JWT de 30 días). El envío del código está **mockeado a consola** (no hay proveedor de WhatsApp configurado todavía). El teléfono debe tener **exactamente 10 dígitos**.
+- **Admin:** email + password (JWT de 8h). Sin auto-registro: los admins se crean por seed o manualmente. No hay ningún link ni botón en la interfaz de cliente que lleve al login de admin — se accede solo entrando directo a `/admin/login`, para mantener la interfaz pública 100% orientada al cliente.
+- **Cliente:** login por OTP enviado a WhatsApp (JWT de 30 días). El teléfono debe tener **exactamente 10 dígitos**. Ver la sección de WhatsApp más abajo sobre el estado del envío real.
+
+## WhatsApp (OTP, confirmación y recordatorios)
+
+El flujo de cliente usa WhatsApp en tres momentos: envío del código OTP, confirmación al crear una reserva, y un recordatorio automático **20 minutos antes** de la hora reservada (además del aviso in-app a los 30 minutos, que sigue existiendo con su opción de cancelación gratuita).
+
+Todo el envío pasa por un único punto: `backend/src/services/whatsappService.js`. Ese servicio intenta usar **Twilio WhatsApp Sandbox** (la única opción realmente gratuita para no depender de un negocio ya facturando) si encuentra las variables `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` y `TWILIO_WHATSAPP_FROM` en el `.env`.
+
+**Estado actual: mockeado a consola.** Activar Twilio de verdad requiere crear una cuenta, y además su sandbox exige que cada número que vaya a recibir mensajes le mande primero un `join <palabra>` al número de Twilio para autorizarlo (y ese permiso vence cada 72h) — demasiada fricción para esta etapa del proyecto, que todavía no se vende ni se usa de forma recurrente. Por eso, mientras no haya credenciales configuradas, cada mensaje simplemente se imprime en la consola del backend con el prefijo `[WHATSAPP MOCK]` o `[OTP MOCK]`, y el resto del flujo (crear cliente, generar reserva, marcar el recordatorio como enviado) funciona exactamente igual que si el mensaje hubiera salido de verdad.
+
+Cuando el proyecto se venda y valga la pena pagar un número de WhatsApp Business real (de Twilio o de otro proveedor), solo hace falta completar esas variables de entorno — no hay que tocar código en ningún otro lado.
+
+El recordatorio de 20 minutos corre como un cron (`node-cron`, cada minuto) en `backend/src/jobs/recordatorioWhatsappJob.js`, y usa un campo `recordatorioEnviado` en `Reserva` para no enviar el mismo aviso dos veces.
 
 ## Funcionalidades principales
 
 **Cliente**
-- Registro/login unificado por teléfono + OTP.
+- Registro/login unificado por teléfono + OTP (por WhatsApp).
 - Grilla de disponibilidad por cancha, selección de una o varias horas consecutivas (drag-select).
 - Agregar bebidas a la misma reserva, con descuento de inventario atómico.
-- Recordatorio en la app 30 minutos antes de la reserva, con cancelación gratuita.
+- WhatsApp de confirmación al reservar, con cancha, horario y total.
+- Recordatorio in-app 30 minutos antes (con cancelación gratuita) + recordatorio por WhatsApp 20 minutos antes.
 - Listado de reservas propias, con cancelación (libera inventario y el horario).
 
 **Administrador**
+- Acceso separado de la interfaz de cliente: sin links visibles, solo por URL directa (`/admin/login`).
 - CRUD de tipos de cancha, canchas y productos (bebidas), con imagen por URL.
 - Panel de reservas con filtros por fecha, estado y rango de horas.
 - Marcar reservas como pagadas/pendientes (bloqueado si la reserva está cancelada).
@@ -90,6 +104,7 @@ Variables de entorno (`backend/.env`):
 | `JWT_SECRET` | Secreto para firmar los JWT |
 | `TENANT_NOMBRE` | Nombre del negocio sembrado por el seed |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Credenciales del admin inicial |
+| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_WHATSAPP_FROM` | Opcionales. Sin configurar, el envío de WhatsApp queda mockeado a consola (ver sección WhatsApp) |
 
 ## Puesta en marcha — Frontend
 

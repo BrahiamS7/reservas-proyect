@@ -16,4 +16,13 @@ function fechaUtcALocal(fecha) {
   return new Date(fecha.getTime() + OFFSET_HORAS * 3600000);
 }
 
-module.exports = { OFFSET_HORAS, localAFechaUtc, fechaUtcALocal };
+function formatearFechaHoraLocal(fecha) {
+  const local = fechaUtcALocal(fecha);
+  const dia = String(local.getUTCDate()).padStart(2, '0');
+  const mes = String(local.getUTCMonth() + 1).padStart(2, '0');
+  const horas = String(local.getUTCHours()).padStart(2, '0');
+  const minutos = String(local.getUTCMinutes()).padStart(2, '0');
+  return `${dia}/${mes} ${horas}:${minutos}`;
+}
+
+module.exports = { OFFSET_HORAS, localAFechaUtc, fechaUtcALocal, formatearFechaHoraLocal };

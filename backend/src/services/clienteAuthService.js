@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/prisma');
 const { obtenerTenantPorDefecto } = require('./tenantService');
+const { enviarWhatsapp } = require('./whatsappService');
 
 const OTP_EXPIRACION_MINUTOS = 5;
 const JWT_EXPIRES_IN = '30d';
@@ -56,9 +57,10 @@ async function solicitarOtp({ telefono, nombre }) {
     data: { clienteId: cliente.id, codigo, expiraEn },
   });
 
-  // MOCK: todavía no hay proveedor de WhatsApp definido (Twilio, Meta Cloud API, etc).
-  // Por ahora el código se imprime en consola para poder probar el flujo completo.
-  console.log(`[OTP MOCK] WhatsApp -> ${telefono}: tu código es ${codigo} (vence en ${OTP_EXPIRACION_MINUTOS} min)`);
+  await enviarWhatsapp(
+    telefono,
+    `Tu código para reservar es *${codigo}*. Vence en ${OTP_EXPIRACION_MINUTOS} minutos.`
+  );
 
   return {
     clienteId: cliente.id,

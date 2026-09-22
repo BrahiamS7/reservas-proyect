@@ -1,5 +1,6 @@
 const prisma = require('../config/prisma');
-const { fechaUtcALocal } = require('../config/timezone');
+const { fechaUtcALocal, formatearFechaHoraLocal } = require('../config/timezone');
+const { enviarWhatsapp } = require('./whatsappService');
 
 function crearError(mensaje, statusCode) {
   const error = new Error(mensaje);
@@ -12,14 +13,20 @@ function esErrorDeHorarioCruzado(error) {
   return mensaje.includes('no_reservas_cruzadas') || mensaje.toLowerCase().includes('exclusion');
 }
 
-// MOCK: todavía no hay proveedor de WhatsApp definido (Twilio, Meta Cloud API, etc).
-// Reemplazar esta función por la integración real cuando se elija el proveedor.
 function enviarConfirmacionWhatsapp(reserva) {
-  console.log(
-    `[WHATSAPP MOCK] -> ${reserva.cliente.telefono}: Reserva confirmada en ${reserva.cancha.nombre} ` +
-      `(${reserva.cancha.tipoCancha.nombre}) el ${reserva.inicio.toISOString()} - ${reserva.fin.toISOString()}. ` +
-      `Total: $${reserva.precioTotal}`
-  );
+  const bebidas = reserva.reservaBebidas || [];
+  const detalleBebidas = bebidas.length
+    ? `\nBebidas: ${bebidas.map((b) => `${b.producto.nombre} x${b.cantidad}`).join(', ')}`
+    : '';
+
+  const mensaje =
+    `Reserva confirmada ✅\n` +
+    `Cancha: ${reserva.cancha.nombre} (${reserva.cancha.tipoCancha.nombre})\n` +
+    `Horario: ${formatearFechaHoraLocal(reserva.inicio)} - ${formatearFechaHoraLocal(reserva.fin)}` +
+    detalleBebidas +
+    `\nTotal: $${Number(reserva.precioTotal).toLocaleString('es-CO')}`;
+
+  return enviarWhatsapp(reserva.cliente.telefono, mensaje);
 }
 
 async function crearReserva(tenantId, clienteId, { canchaId, inicio, cantidadSlots, bebidas }) {
@@ -115,7 +122,7 @@ async function crearReserva(tenantId, clienteId, { canchaId, inicio, cantidadSlo
       });
     });
 
-    enviarConfirmacionWhatsapp(reserva);
+    await enviarConfirmacionWhatsapp(reserva);
     return reserva;
   } catch (error) {
     if (error.statusCode) throw error;

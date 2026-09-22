@@ -146,6 +146,7 @@ model Reserva {
   estado      EstadoReserva @default(PENDIENTE)
   estadoPago  EstadoPago    @default(PENDIENTE) @map("estado_pago")
   precioTotal Decimal       @map("precio_total") @db.Decimal(10, 2)
+  recordatorioEnviado Boolean @default(false) @map("recordatorio_enviado")
   createdAt   DateTime      @default(now()) @map("created_at")
 
   tenant         Tenant          @relation(fields: [tenantId], references: [id])

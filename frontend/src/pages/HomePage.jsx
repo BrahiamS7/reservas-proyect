@@ -6,9 +6,6 @@ export default function HomePage() {
     <div className="pagina-bloque">
       <nav className="bloque-nav">
         <span className="bloque-nav-marca">COMPLEJO DEPORTIVO</span>
-        <Link to="/admin/login">
-          <button className="btn-oscuro">Ingreso admin</button>
-        </Link>
       </nav>
 
       <div className="hero-bloque-grid">
