@@ -16,13 +16,24 @@ function fechaUtcALocal(fecha) {
   return new Date(fecha.getTime() + OFFSET_HORAS * 3600000);
 }
 
-function formatearFechaHoraLocal(fecha) {
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const MESES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
+
+// ej. "jueves 8 de octubre"
+function formatearDiaLocal(fecha) {
   const local = fechaUtcALocal(fecha);
-  const dia = String(local.getUTCDate()).padStart(2, '0');
-  const mes = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const horas = String(local.getUTCHours()).padStart(2, '0');
-  const minutos = String(local.getUTCMinutes()).padStart(2, '0');
-  return `${dia}/${mes} ${horas}:${minutos}`;
+  return `${DIAS[local.getUTCDay()]} ${local.getUTCDate()} de ${MESES[local.getUTCMonth()]}`;
 }
 
-module.exports = { OFFSET_HORAS, localAFechaUtc, fechaUtcALocal, formatearFechaHoraLocal };
+// ej. "2:00 PM"
+function formatearHoraLocal(fecha) {
+  const local = fechaUtcALocal(fecha);
+  const horas = local.getUTCHours();
+  const minutos = String(local.getUTCMinutes()).padStart(2, '0');
+  return `${horas % 12 || 12}:${minutos} ${horas < 12 ? 'AM' : 'PM'}`;
+}
+
+module.exports = { OFFSET_HORAS, localAFechaUtc, fechaUtcALocal, formatearDiaLocal, formatearHoraLocal };

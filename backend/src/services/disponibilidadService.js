@@ -1,14 +1,10 @@
 const prisma = require('../config/prisma');
-const { localAFechaUtc } = require('../config/timezone');
+const { localAFechaUtc, formatearHoraLocal } = require('../config/timezone');
 
 function crearError(mensaje, statusCode) {
   const error = new Error(mensaje);
   error.statusCode = statusCode;
   return error;
-}
-
-function pad(n) {
-  return n.toString().padStart(2, '0');
 }
 
 function parsearFecha(fecha) {
@@ -87,7 +83,7 @@ async function obtenerDisponibilidad(tenantId, { tipoCanchaId, fecha }) {
       const yaPaso = inicioMs < ahoraMs;
 
       slots.push({
-        etiqueta: `${pad(horaInicioSlot)}:${pad(minInicioSlot)} - ${pad(horaFinSlot)}:${pad(minFinSlot)}`,
+        etiqueta: `${formatearHoraLocal(inicioUtc)} - ${formatearHoraLocal(finUtc)}`,
         inicio: inicioUtc.toISOString(),
         fin: finUtc.toISOString(),
         disponible: !ocupado && !yaPaso,

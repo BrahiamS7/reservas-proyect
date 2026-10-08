@@ -1,6 +1,7 @@
 const prisma = require('../config/prisma');
-const { fechaUtcALocal, formatearFechaHoraLocal } = require('../config/timezone');
+const { fechaUtcALocal } = require('../config/timezone');
 const { enviarWhatsapp } = require('./whatsappService');
+const { mensajeConfirmacion } = require('../utils/mensajesWhatsapp');
 
 function crearError(mensaje, statusCode) {
   const error = new Error(mensaje);
@@ -11,22 +12,6 @@ function crearError(mensaje, statusCode) {
 function esErrorDeHorarioCruzado(error) {
   const mensaje = (error && error.message) || '';
   return mensaje.includes('no_reservas_cruzadas') || mensaje.toLowerCase().includes('exclusion');
-}
-
-function enviarConfirmacionWhatsapp(reserva) {
-  const bebidas = reserva.reservaBebidas || [];
-  const detalleBebidas = bebidas.length
-    ? `\nBebidas: ${bebidas.map((b) => `${b.producto.nombre} x${b.cantidad}`).join(', ')}`
-    : '';
-
-  const mensaje =
-    `Reserva confirmada ✅\n` +
-    `Cancha: ${reserva.cancha.nombre} (${reserva.cancha.tipoCancha.nombre})\n` +
-    `Horario: ${formatearFechaHoraLocal(reserva.inicio)} - ${formatearFechaHoraLocal(reserva.fin)}` +
-    detalleBebidas +
-    `\nTotal: $${Number(reserva.precioTotal).toLocaleString('es-CO')}`;
-
-  return enviarWhatsapp(reserva.cliente.telefono, mensaje);
 }
 
 async function crearReserva(tenantId, clienteId, { canchaId, inicio, cantidadSlots, bebidas }) {
@@ -122,7 +107,7 @@ async function crearReserva(tenantId, clienteId, { canchaId, inicio, cantidadSlo
       });
     });
 
-    await enviarConfirmacionWhatsapp(reserva);
+    await enviarWhatsapp(reserva.cliente.telefono, mensajeConfirmacion(reserva, tenant.nombre));
     return reserva;
   } catch (error) {
     if (error.statusCode) throw error;

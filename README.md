@@ -69,7 +69,7 @@ Construido para revenderse: el mismo modelo de datos y las mismas capas de códi
 | Backend | Node.js + Express 5 |
 | ORM / DB | Prisma 6.19 + PostgreSQL (extensión `btree_gist`) |
 | Auth | JWT (`jsonwebtoken`) + `bcryptjs` |
-| Mensajería | Twilio WhatsApp (mockeable a consola) + `node-cron` |
+| Mensajería | WhatsApp Cloud API de Meta (mockeable a consola) + `node-cron` |
 | Frontend | React 19 + Vite + React Router 7 |
 | Estilos | CSS con variables de diseño (sin framework) · Bebas Neue + Inter |
 
@@ -136,10 +136,12 @@ No hay ningún link ni botón en la interfaz de cliente que lleve al login de ad
 
 El flujo de cliente usa WhatsApp en tres momentos: envío del código OTP, confirmación al crear una reserva, y un recordatorio automático **20 minutos antes** de la hora reservada (además del aviso in-app a los 30 minutos, que sigue existiendo con su opción de cancelación gratuita).
 
-Todo el envío pasa por un único punto: `backend/src/services/whatsappService.js`, que intenta usar **Twilio WhatsApp Sandbox** si encuentra `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` y `TWILIO_WHATSAPP_FROM` en el `.env`.
+Todo el envío pasa por un único punto: `backend/src/services/whatsappService.js`, que usa la **WhatsApp Cloud API de Meta** si encuentra `WHATSAPP_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID` en el `.env`.
 
 > [!IMPORTANT]
-> **Estado actual: mockeado a consola.** El sandbox de Twilio exige que cada número autorice al remitente con un `join <palabra>` cada 72h — demasiada fricción para esta etapa, en la que el proyecto todavía no se vende ni se usa de forma recurrente. Mientras no haya credenciales configuradas, cada mensaje se imprime en la consola del backend con el prefijo `[WHATSAPP MOCK]` / `[OTP MOCK]`, y el resto del flujo (crear cliente, generar reserva, marcar el recordatorio como enviado) funciona exactamente igual que si el mensaje hubiera salido de verdad. Activar el envío real es solo completar esas tres variables de entorno — no hay que tocar código.
+> **Estado actual: mockeado a consola por defecto.** Se descartó Twilio porque su sandbox exige que cada número autorice al remitente con un `join <palabra>` cada 72h y pide demasiada configuración para esta etapa. Sin credenciales (o si el envío falla), cada mensaje se imprime en la consola del backend con el prefijo `[WHATSAPP MOCK]` / `[WHATSAPP FALLBACK]`, y el resto del flujo funciona igual que si el mensaje hubiera salido de verdad.
+>
+> **Prueba con el número gratuito de Meta:** permite enviar a hasta 5 teléfonos verificados. Para que lleguen mensajes de texto libre, el destinatario debe escribirle primero al número de prueba (eso abre una ventana de 24 h). En producción, los mensajes iniciados por el negocio (código, confirmación, recordatorio) requieren plantillas aprobadas por Meta y se cobran por mensaje.
 
 El recordatorio de 20 minutos corre como un cron (`node-cron`, cada minuto) en `backend/src/jobs/recordatorioWhatsappJob.js`, y usa el campo `recordatorio_enviado` de `Reserva` para no enviar el mismo aviso dos veces.
 
@@ -191,7 +193,7 @@ npm run dev
 | `JWT_SECRET` | Secreto para firmar los JWT |
 | `TENANT_NOMBRE` | Nombre del negocio sembrado por el seed |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Credenciales del admin inicial |
-| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_WHATSAPP_FROM` | Opcionales — sin configurar, WhatsApp queda mockeado a consola |
+| `WHATSAPP_TOKEN` / `WHATSAPP_PHONE_NUMBER_ID` | Opcionales — sin configurar, WhatsApp queda mockeado a consola |
 
 ### Frontend
 

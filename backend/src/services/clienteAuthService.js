@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const prisma = require('../config/prisma');
 const { obtenerTenantPorDefecto } = require('./tenantService');
 const { enviarWhatsapp } = require('./whatsappService');
+const { mensajeCodigo } = require('../utils/mensajesWhatsapp');
 
 const OTP_EXPIRACION_MINUTOS = 5;
 const JWT_EXPIRES_IN = '30d';
@@ -59,7 +60,7 @@ async function solicitarOtp({ telefono, nombre }) {
 
   await enviarWhatsapp(
     telefono,
-    `Tu código para reservar es *${codigo}*. Vence en ${OTP_EXPIRACION_MINUTOS} minutos.`
+    mensajeCodigo({ codigo, minutos: OTP_EXPIRACION_MINUTOS, negocio: tenant.nombre })
   );
 
   return {

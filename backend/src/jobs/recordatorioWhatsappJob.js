@@ -1,7 +1,7 @@
 const cron = require('node-cron');
 const prisma = require('../config/prisma');
-const { formatearFechaHoraLocal } = require('../config/timezone');
 const { enviarWhatsapp } = require('../services/whatsappService');
+const { mensajeRecordatorio } = require('../utils/mensajesWhatsapp');
 
 const MINUTOS_RECORDATORIO = 20;
 
@@ -15,15 +15,11 @@ async function enviarRecordatoriosPendientes() {
       recordatorioEnviado: false,
       inicio: { gt: ahora, lte: limite },
     },
-    include: { cancha: true, cliente: true },
+    include: { cancha: true, cliente: true, tenant: true },
   });
 
   for (const reserva of reservas) {
-    const mensaje =
-      `Recordatorio ⏰ Tenés una reserva en ${reserva.cancha.nombre} a las ` +
-      `${formatearFechaHoraLocal(reserva.inicio)}. ¡Te esperamos!`;
-
-    await enviarWhatsapp(reserva.cliente.telefono, mensaje);
+    await enviarWhatsapp(reserva.cliente.telefono, mensajeRecordatorio(reserva, reserva.tenant.nombre));
 
     await prisma.reserva.update({
       where: { id: reserva.id },
