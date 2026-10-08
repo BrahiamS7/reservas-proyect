@@ -41,8 +41,8 @@ Construido para revenderse: el mismo modelo de datos y las mismas capas de códi
 <td valign="top" width="50%">
 
 **Cliente**
-- Registro/login unificado por teléfono + OTP (WhatsApp)
-- Grilla de disponibilidad por cancha, selección de una o varias horas consecutivas (drag-select)
+- Login en dos pasos: solo pide el teléfono; el nombre se pregunta únicamente si el número no está registrado. Luego, código OTP (WhatsApp)
+- Grilla de disponibilidad por cancha, selección de una o varias horas consecutivas (drag-select); los horarios que ya empezaron se muestran en gris y no se pueden reservar
 - Bebidas agregadas a la misma reserva, con descuento de inventario atómico
 - Confirmación por WhatsApp al reservar: cancha, horario y total
 - Recordatorio in-app 30 min antes (con cancelación gratuita) + recordatorio por WhatsApp 20 min antes
