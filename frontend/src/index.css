@@ -813,6 +813,13 @@ label {
   cursor: not-allowed;
 }
 
+.slot-gris {
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  cursor: not-allowed;
+}
+
 .slot-seleccionando {
   outline: 3px solid var(--accent);
   outline-offset: 2px;

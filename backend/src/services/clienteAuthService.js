@@ -37,9 +37,9 @@ async function solicitarOtp({ telefono, nombre }) {
 
   let esNuevoRegistro = false;
   if (!cliente) {
-    if (!nombre) throw crearError('nombre es requerido para registrarte', 400);
+    if (!nombre || !nombre.trim()) return { requiereNombre: true };
     cliente = await prisma.cliente.create({
-      data: { tenantId: tenant.id, telefono, nombre },
+      data: { tenantId: tenant.id, telefono, nombre: nombre.trim() },
     });
     esNuevoRegistro = true;
   }

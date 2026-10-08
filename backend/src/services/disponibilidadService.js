@@ -84,13 +84,14 @@ async function obtenerDisponibilidad(tenantId, { tipoCanchaId, fecha }) {
       const ocupado = reservas.some(
         (r) => r.canchaId === cancha.id && r.inicio.getTime() < finMs && r.fin.getTime() > inicioMs
       );
-      const yaPaso = finMs <= ahoraMs;
+      const yaPaso = inicioMs < ahoraMs;
 
       slots.push({
         etiqueta: `${pad(horaInicioSlot)}:${pad(minInicioSlot)} - ${pad(horaFinSlot)}:${pad(minFinSlot)}`,
         inicio: inicioUtc.toISOString(),
         fin: finUtc.toISOString(),
         disponible: !ocupado && !yaPaso,
+        pasado: yaPaso,
       });
     }
     return { id: cancha.id, nombre: cancha.nombre, imagenUrl: cancha.imagenUrl, slots };

@@ -226,7 +226,7 @@ export default function ClienteAppPage() {
                         seleccion.canchaId === cancha.id &&
                         idx >= seleccion.inicioIdx &&
                         idx <= seleccion.finIdx;
-                      let claseSlot = slot.disponible ? 'slot slot-verde' : 'slot slot-rojo';
+                      let claseSlot = slot.disponible ? 'slot slot-verde' : slot.pasado ? 'slot slot-gris' : 'slot slot-rojo';
                       if (enSeleccion) claseSlot += ' slot-seleccionando';
                       return (
                         <button

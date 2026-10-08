@@ -6,7 +6,7 @@ export default function ClienteLoginPage() {
   const { pedirOtp, confirmarOtp } = useClienteAuth();
   const navigate = useNavigate();
 
-  const [paso, setPaso] = useState('telefono'); // 'telefono' | 'codigo'
+  const [paso, setPaso] = useState('telefono'); // 'telefono' | 'nombre' | 'codigo'
   const [telefono, setTelefono] = useState('');
   const [nombre, setNombre] = useState('');
   const [codigo, setCodigo] = useState('');
@@ -20,8 +20,12 @@ export default function ClienteLoginPage() {
     setCargando(true);
     try {
       const resultado = await pedirOtp(telefono, nombre || undefined);
-      setEsNuevo(resultado.esNuevoRegistro);
-      setPaso('codigo');
+      if (resultado.requiereNombre) {
+        setPaso('nombre');
+      } else {
+        setEsNuevo(resultado.esNuevoRegistro);
+        setPaso('codigo');
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -64,13 +68,26 @@ export default function ClienteLoginPage() {
                 required
               />
             </label>
+            {error && <p className="error">{error}</p>}
+            <button type="submit" disabled={cargando}>
+              {cargando ? 'Enviando...' : 'Continuar'}
+            </button>
+          </form>
+        )}
+
+        {paso === 'nombre' && (
+          <form onSubmit={onPedirOtp}>
+            <p>Es tu primera vez por acá. ¿Cómo te llamas?</p>
             <label>
-              Nombre completo (solo si es tu primera vez)
-              <input value={nombre} onChange={(e) => setNombre(e.target.value)} />
+              Nombre completo
+              <input value={nombre} onChange={(e) => setNombre(e.target.value)} required autoFocus />
             </label>
             {error && <p className="error">{error}</p>}
             <button type="submit" disabled={cargando}>
               {cargando ? 'Enviando...' : 'Enviar código'}
+            </button>
+            <button type="button" onClick={() => setPaso('telefono')}>
+              Volver
             </button>
           </form>
         )}
